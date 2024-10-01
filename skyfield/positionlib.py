@@ -593,6 +593,34 @@ class ICRF(object):
         near, far = intersect_line_and_sphere(sun_m + earth_m, earth_m, ERAD)
         return nan_to_num(far) <= 0
 
+
+
+    def is_moonlit(self, ephemeris):
+        """Return whether a position in Earth orbit is in moonlight.
+
+        Returns ``True`` or ``False``, or an array of such values, to
+        indicate whether this position is in moonlight or is blocked by
+        the Earth’s shadow.  It should work with positions produced
+        either by calling ``at()`` on a satellite object, or by calling
+        ``at()`` on the relative position ``sat - topos`` of a satellite
+        with respect to an Earth observer’s position.  See
+        :ref:`satellite-is-sunlit`.
+
+        """
+        if self.center == 399:
+            earth_m = - self.position.m
+        else:
+            gcrs_position = self._observer_gcrs_au
+            if gcrs_position is None:
+                raise ValueError('cannot tell whether this position is moonlit')
+            earth_m = - self.position.m - gcrs_position * AU_M
+
+        moon_m = (ephemeris['moon'] - ephemeris['earth']).at(self.t).position.m
+        near, far = intersect_line_and_sphere(moon_m + earth_m, earth_m, ERAD)
+        return nan_to_num(far) <= 0
+
+
+
     def is_behind_earth(self):
         """Return whether the Earth blocks the view of this object.
 
